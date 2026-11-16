@@ -1,15 +1,23 @@
-// Skywhale v2 — make.fun ai-excited-01
-// A colossal luminous whale bursts out of its gilt-framed painting
-// in a museum, water flooding the floor as visitors flee, a tiny
-// glowing city with a lighthouse riding on its back.
-// This program simply copies the finished image to the output dir.
-// Deterministic: the same input bytes produce the same output bytes
-// on every run — no generation, no randomness, no network.
-import { copyFileSync, mkdirSync } from "node:fs";
+// Skywhale v3 — writes the entry image to the make.fun output directory.
+// Node 22, standard library only. No dependencies, no network.
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const src = join(here, "entry.png");
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
+const dest = join(outDir, "entry.png");
+
+if (!existsSync(src)) {
+  throw new Error(`entry image missing: ${src}`);
+}
+
 mkdirSync(outDir, { recursive: true });
-copyFileSync(join(here, "entry.png"), join(outDir, "entry.png"));
+copyFileSync(src, dest);
+
+const bytes = statSync(dest).size;
+if (bytes > 1_048_576) {
+  throw new Error(`entry image too large: ${bytes} bytes (limit 1 MiB)`);
+}
+console.log(`wrote ${dest} (${bytes} bytes)`);
